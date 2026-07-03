@@ -1,0 +1,67 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="text-center mb-5">
+    <h1 class="display-5 fw-bold">Lost &amp; Found System</h1>
+    <p class="lead text-muted">Track lost items, log found ones, and reunite them with their owners.</p>
+</div>
+
+<!-- Stats Cards -->
+<div class="row g-4 justify-content-center mb-5">
+    <div class="col-md-3">
+        <div class="card text-center shadow-sm border-0 bg-primary text-white">
+            <div class="card-body py-4">
+                <h2 class="display-4 fw-bold">@ViewBag.TotalItems</h2>
+                <p class="mb-0">Total Items</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center shadow-sm border-0 bg-success text-white">
+            <div class="card-body py-4">
+                <h2 class="display-4 fw-bold">@ViewBag.TotalMatches</h2>
+                <p class="mb-0">Reunited</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center shadow-sm border-0 bg-secondary text-white">
+            <div class="card-body py-4">
+                <h2 class="display-4 fw-bold">@ViewBag.TotalUsers</h2>
+                <p class="mb-0">Registered Users</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row g-3 justify-content-center">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-4">
+                <h5 class="card-title">📦 Browse All Items</h5>
+                <p class="card-text text-muted">View, search, and manage all reported lost and found items.</p>
+                <a asp-controller="Items" asp-action="Index" class="btn btn-primary">Go to Items</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-4">
+                <h5 class="card-title">➕ Report an Item</h5>
+                <p class="card-text text-muted">Log a new lost or found item into the system.</p>
+                <a asp-controller="Items" asp-action="Create" class="btn btn-success">Report Item</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-4">
+                <h5 class="card-title">👥 Manage Users</h5>
+                <p class="card-text text-muted">Add and manage users who report items.</p>
+                <a asp-controller="Users" asp-action="Index" class="btn btn-secondary">Go to Users</a>
+            </div>
+        </div>
+    </div>
+</div>

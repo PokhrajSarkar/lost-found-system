@@ -1,0 +1,242 @@
+﻿@model LostFound.Models.Item
+@using LostFound.Models
+@{
+    ViewData["Title"] = Model.Title;
+    var similar = ViewBag.SimilarItems as List<Item> ?? new();
+    var currentUserId = (await Html.ViewContext.HttpContext.RequestServices
+        .GetRequiredService<Microsoft.AspNetCore.Identity.UserManager<User>>()
+        .GetUserAsync(User))?.Id;
+    bool isOwner = Model.UserId == currentUserId || User.IsInRole("Admin");
+}
+
+<div class="row">
+    <!-- Images -->
+    <div class="col-md-5 mb-4">
+        @if (Model.Images.Any() || !string.IsNullOrEmpty(Model.ImagePath))
+        {
+            var allImages = new List<string>();
+            if (!string.IsNullOrEmpty(Model.ImagePath)) allImages.Add(Model.ImagePath);
+            allImages.AddRange(Model.Images.Select(i => i.ImagePath));
+
+            <div id="itemCarousel" class="carousel slide shadow rounded" data-bs-ride="carousel">
+                <div class="carousel-inner">
+                    @for (int i = 0; i < allImages.Count; i++)
+                    {
+                        <div class="carousel-item @(i == 0 ? "active" : "")">
+                            <img src="@allImages[i]" class="d-block w-100 rounded" style="max-height:400px;object-fit:cover" alt="Item image @(i+1)" />
+                        </div>
+                    }
+                </div>
+                @if (allImages.Count > 1)
+                {
+                    <button class="carousel-control-prev" type="button" data-bs-target="#itemCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#itemCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon"></span>
+                    </button>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="img-placeholder rounded shadow"><i class="bi bi-image"></i></div>
+        }
+
+        @if (Model.Latitude.HasValue && Model.Longitude.HasValue)
+        {
+            <div id="detailMap" class="mt-3 rounded shadow" style="height:220px"></div>
+            <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+            <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+            <script>
+                var map = L.map('detailMap').setView([@Model.Latitude, @Model.Longitude], 14);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                L.marker([@Model.Latitude, @Model.Longitude]).addTo(map).bindPopup('@Html.Raw(Model.Title.Replace("'", "\\'"))').openPopup();
+            </script>
+        }
+    </div>
+
+    <!-- Details -->
+    <div class="col-md-7">
+        <div class="d-flex gap-2 mb-3 flex-wrap">
+            <span class="badge fs-6 @(Model.Type == ItemType.Lost ? "badge-lost" : "badge-found") text-white">@Model.Type</span>
+            <span class="badge fs-6 bg-secondary">@Model.Category</span>
+            @if (Model.Status != ItemStatus.Active)
+            {
+                <span class="badge fs-6 bg-warning text-dark">@Model.Status</span>
+            }
+        </div>
+        <h2 class="fw-bold">@Model.Title</h2>
+        <p>@Model.Description</p>
+        <hr />
+        <dl class="row">
+            <dt class="col-sm-4"><i class="bi bi-geo-alt me-1"></i>Location</dt>
+            <dd class="col-sm-8">@Model.Location</dd>
+            <dt class="col-sm-4"><i class="bi bi-calendar me-1"></i>Date</dt>
+            <dd class="col-sm-8">@Model.DateOccurred.ToString("MMMM dd, yyyy")</dd>
+            <dt class="col-sm-4"><i class="bi bi-clock me-1"></i>Posted</dt>
+            <dd class="col-sm-8">@Model.DatePosted.ToString("MMM dd, yyyy HH:mm") UTC</dd>
+            @if (Model.ExpiresAt.HasValue)
+            {
+                <dt class="col-sm-4"><i class="bi bi-hourglass me-1"></i>Expires</dt>
+                <dd class="col-sm-8">@Model.ExpiresAt.Value.ToString("MMM dd, yyyy")</dd>
+            }
+            @if (!string.IsNullOrEmpty(Model.ContactInfo))
+            {
+                <dt class="col-sm-4"><i class="bi bi-telephone me-1"></i>Contact</dt>
+                <dd class="col-sm-8">@Model.ContactInfo</dd>
+            }
+            @if (Model.User != null)
+            {
+                <dt class="col-sm-4"><i class="bi bi-person me-1"></i>Posted by</dt>
+                <dd class="col-sm-8">@Model.User.FullName</dd>
+            }
+        </dl>
+
+        <div class="d-flex gap-2 flex-wrap mt-3">
+            <a asp-action="FindMatches" asp-route-id="@Model.Id" class="btn btn-success">
+                <i class="bi bi-search me-1"></i>Find Matches
+            </a>
+            @if (Model.User != null && User.Identity?.IsAuthenticated == true && Model.UserId != currentUserId)
+            {
+                <a asp-controller="Messages" asp-action="Compose"
+                   asp-route-receiverId="@Model.UserId" asp-route-itemId="@Model.Id"
+                   class="btn btn-outline-primary">
+                    <i class="bi bi-chat me-1"></i>Contact Poster
+                </a>
+            }
+            @if (isOwner)
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-warning">
+                    <i class="bi bi-pencil me-1"></i>Edit
+                </a>
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger">
+                    <i class="bi bi-trash me-1"></i>Delete
+                </a>
+            }
+            <!-- Share buttons -->
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                    <i class="bi bi-share me-1"></i>Share
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a class="dropdown-item" href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString(Context.Request.Scheme + "://" + Context.Request.Host + Context.Request.Path)" target="_blank">
+                            <i class="bi bi-facebook me-2"></i>Facebook
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="https://twitter.com/intent/tweet?url=@Uri.EscapeDataString(Context.Request.Scheme + "://" + Context.Request.Host + Context.Request.Path)&text=@Uri.EscapeDataString(Model.Title)" target="_blank">
+                            <i class="bi bi-twitter-x me-2"></i>Twitter/X
+                        </a>
+                    </li>
+                    <li>
+                        <button class="dropdown-item" onclick="navigator.clipboard.writeText(window.location.href);alert('Link copied!')">
+                            <i class="bi bi-link me-2"></i>Copy Link
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <button class="btn btn-outline-secondary" onclick="window.print()" title="Print">
+                <i class="bi bi-printer"></i>
+            </button>
+            <a asp-action="Index" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Back
+            </a>
+        </div>
+
+        <!-- Claim form (for Found items, logged-in non-owners) -->
+        @if (Model.Type == ItemType.Found && User.Identity?.IsAuthenticated == true && !isOwner && Model.Status == ItemStatus.Active)
+        {
+            <div class="card mt-4 border-success">
+                <div class="card-header bg-success text-white"><i class="bi bi-hand-index me-2"></i>Claim This Item</div>
+                <div class="card-body">
+                    <form asp-action="SubmitClaim" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="itemId" value="@Model.Id" />
+                        <div class="mb-3">
+                            <label class="form-label">Describe why this is yours</label>
+                            <textarea name="description" class="form-control" rows="3" required maxlength="1000"
+                                      placeholder="Provide details only the owner would know..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success">Submit Claim</button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Comments -->
+<div class="row mt-5">
+    <div class="col-md-8">
+        <h5><i class="bi bi-chat-left-text me-2"></i>Comments (@Model.Comments.Count)</h5>
+        <hr />
+        @foreach (var comment in Model.Comments.OrderBy(c => c.PostedAt))
+        {
+            <div class="d-flex gap-3 mb-3">
+                <div class="flex-shrink-0">
+                    <i class="bi bi-person-circle fs-3 text-muted"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between">
+                        <strong>@(comment.User?.FullName ?? "User")</strong>
+                        <small class="text-muted">@comment.PostedAt.ToString("MMM dd, yyyy HH:mm")</small>
+                    </div>
+                    <p class="mb-1">@comment.Body</p>
+                    @if (User.Identity?.IsAuthenticated == true && (comment.UserId == currentUserId || User.IsInRole("Admin")))
+                    {
+                        <form asp-action="DeleteComment" asp-route-id="@comment.Id" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-link btn-sm text-danger p-0">Delete</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <form asp-action="AddComment" method="post" class="mt-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="itemId" value="@Model.Id" />
+                <div class="input-group">
+                    <input type="text" name="body" class="form-control" placeholder="Add a comment..." maxlength="500" required />
+                    <button type="submit" class="btn btn-primary">Post</button>
+                </div>
+            </form>
+        }
+        else
+        {
+            <p class="text-muted small"><a asp-controller="Users" asp-action="Login">Login</a> to leave a comment.</p>
+        }
+    </div>
+
+    <!-- Similar items sidebar -->
+    @if (similar.Any())
+    {
+        <div class="col-md-4">
+            <h5><i class="bi bi-grid me-2"></i>Similar Items</h5>
+            <hr />
+            @foreach (var s in similar)
+            {
+                <div class="d-flex gap-2 mb-3 align-items-center">
+                    @if (!string.IsNullOrEmpty(s.ImagePath))
+                    {
+                        <img src="@s.ImagePath" style="width:60px;height:60px;object-fit:cover;border-radius:.375rem" alt="@s.Title" />
+                    }
+                    else
+                    {
+                        <div style="width:60px;height:60px;background:#f0f0f0;border-radius:.375rem;display:flex;align-items:center;justify-content:center">
+                            <i class="bi bi-image text-muted"></i>
+                        </div>
+                    }
+                    <div>
+                        <a asp-action="Details" asp-route-id="@s.Id" class="fw-semibold text-decoration-none">@s.Title</a>
+                        <div class="small text-muted">@s.Location</div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

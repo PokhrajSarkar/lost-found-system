@@ -1,0 +1,68 @@
+﻿@model IEnumerable<LostFound.Models.Item>
+@using LostFound.Models
+@{
+    var current = ViewData["CurrentItem"] as LostFound.Models.Item;
+    ViewData["Title"] = "Find Matches";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Matches for: <em>@current?.Title</em></h1>
+    <a asp-action="Details" asp-route-id="@current?.Id" class="btn btn-outline-secondary">← Back</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-warning">
+        No potential matches found yet. Check back later or try a different category.
+    </div>
+}
+else
+{
+    <p class="text-muted">Items below are in the same category with a different type (Lost ↔ Found).</p>
+
+    <table class="table table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Image</th>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Location</th>
+                <th>Reported By</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.ImagePath))
+                        {
+                            <img src="@item.ImagePath"
+                                 style="width:50px;height:50px;object-fit:cover;border-radius:4px;" />
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </td>
+                    <td><strong>@item.Title</strong></td>
+                    <td>
+                        <span class="badge @(item.Type == ItemType.Lost ? "badge-lost" : "badge-found") text-white">@item.Type</span>
+                    </td>
+                    <td>@item.Location</td>
+                    <td>@item.User?.FullName</td>
+                    <td>
+                        <a asp-action="LinkItems"
+                           asp-route-id="@current?.Id"
+                           asp-route-matchId="@item.Id"
+                           class="btn btn-success btn-sm"
+                           onclick="return confirm('Link these two items as a match?')">
+                            ✓ This is the match!
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

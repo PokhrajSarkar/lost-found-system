@@ -1,0 +1,87 @@
+@model IEnumerable<LostFound.Models.Item>
+@using LostFound.Models
+@{
+    ViewData["Title"] = "My Items";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">My Items</h2>
+  <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Post New Item</a>
+</div>
+
+@if (!Model.Any())
+{
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+    <p>You haven't posted any items yet.</p>
+    <a asp-action="Create" class="btn btn-primary">Post Your First Item</a>
+  </div>
+}
+else
+{
+  <div class="table-responsive">
+    <table class="table table-hover align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Title</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Location</th>
+          <th>Date</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @foreach (var item in Model)
+        {
+          <tr>
+            <td class="fw-semibold">@item.Title</td>
+            <td>
+              <span class="badge @(item.Type == ItemType.Lost ? "badge-lost" : "badge-found") text-white">@item.Type</span>
+            </td>
+            <td>@item.Category</td>
+            <td>@item.Location</td>
+            <td>@item.DateOccurred.ToString("MMM dd, yyyy")</td>
+            <td>
+              @if (item.Status == ItemStatus.Active)
+              {
+                <span class="badge bg-success">Active</span>
+              }
+              else if (item.Status == ItemStatus.Resolved)
+              {
+                <span class="badge bg-primary">Resolved</span>
+              }
+              else
+              {
+                <span class="badge bg-secondary">@item.Status</span>
+              }
+            </td>
+            <td>
+              <div class="d-flex gap-1">
+                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" title="View">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-warning" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                @if (item.Status == ItemStatus.Active)
+                {
+                  <form asp-action="MarkResolved" asp-route-id="@item.Id" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-outline-success" title="Mark Resolved">
+                      <i class="bi bi-check-circle"></i>
+                    </button>
+                  </form>
+                }
+                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" title="Delete">
+                  <i class="bi bi-trash"></i>
+                </a>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

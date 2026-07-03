@@ -1,0 +1,76 @@
+@model IEnumerable<LostFound.Models.Claim>
+@using LostFound.Models
+@{
+    ViewData["Title"] = "Review Claims";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="bi bi-hand-index me-2"></i>Review Claims</h2>
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Dashboard</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="text-center py-5 text-muted">
+        <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+        <p>No claims to review.</p>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr><th>Item</th><th>Claimant</th><th>Description</th><th>Submitted</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var claim in Model)
+                {
+                    <tr>
+                        <td>
+                            <a asp-controller="Items" asp-action="Details" asp-route-id="@claim.ItemId">
+                                @(claim.Item?.Title ?? "—")
+                            </a>
+                        </td>
+                        <td>@(claim.Claimant?.FullName ?? "—")</td>
+                        <td class="small" style="max-width:300px">@claim.Description</td>
+                        <td class="small text-muted">@claim.SubmittedAt.ToString("MMM dd, yyyy")</td>
+                        <td>
+                            @if (claim.Status == ClaimStatus.Pending)
+                            {
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            }
+                            else if (claim.Status == ClaimStatus.Approved)
+                            {
+                                <span class="badge bg-success">Approved</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Rejected</span>
+                            }
+                        </td>
+                        <td>
+                            @if (claim.Status == ClaimStatus.Pending)
+                            {
+                                <div class="d-flex gap-1">
+                                    <form asp-action="ApproveClaim" asp-route-id="@claim.Id" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-success" title="Approve">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                    </form>
+                                    <form asp-action="RejectClaim" asp-route-id="@claim.Id" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Reject">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

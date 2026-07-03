@@ -1,0 +1,130 @@
+@model LostFound.Models.ViewModels.AdminDashboardViewModel
+@using LostFound.Models
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0"><i class="bi bi-shield-check me-2"></i>Admin Dashboard</h2>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-2">
+        <div class="card text-center p-3 shadow-sm border-primary">
+            <div class="fs-2 fw-bold text-primary">@Model.TotalUsers</div>
+            <div class="small text-muted">Users</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center p-3 shadow-sm">
+            <div class="fs-2 fw-bold">@Model.TotalItems</div>
+            <div class="small text-muted">Total Items</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center p-3 shadow-sm border-success">
+            <div class="fs-2 fw-bold text-success">@Model.ActiveItems</div>
+            <div class="small text-muted">Active</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center p-3 shadow-sm border-info">
+            <div class="fs-2 fw-bold text-info">@Model.ResolvedItems</div>
+            <div class="small text-muted">Resolved</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center p-3 shadow-sm border-warning">
+            <div class="fs-2 fw-bold text-warning">@Model.PendingApproval</div>
+            <div class="small text-muted">Pending</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center p-3 shadow-sm">
+            <div class="fs-2 fw-bold">@Model.TotalMessages</div>
+            <div class="small text-muted">Messages</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <a asp-action="Items" class="btn btn-outline-primary w-100 py-3">
+            <i class="bi bi-list-ul d-block fs-3 mb-1"></i>Manage Items
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a asp-action="Items" asp-route-pendingOnly="true" class="btn btn-outline-warning w-100 py-3">
+            <i class="bi bi-hourglass d-block fs-3 mb-1"></i>Pending Approval
+            @if (Model.PendingApproval > 0)
+            {
+                <span class="badge bg-warning text-dark ms-1">@Model.PendingApproval</span>
+            }
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a asp-action="Users" class="btn btn-outline-secondary w-100 py-3">
+            <i class="bi bi-people d-block fs-3 mb-1"></i>Manage Users
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a asp-action="Claims" class="btn btn-outline-success w-100 py-3">
+            <i class="bi bi-hand-index d-block fs-3 mb-1"></i>Review Claims
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header fw-semibold">Recent Items</div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>Title</th><th>Type</th><th>Status</th><th>Posted</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.RecentItems)
+                        {
+                            <tr>
+                                <td>@item.Title</td>
+                                <td><span class="badge @(item.Type == ItemType.Lost ? "badge-lost" : "badge-found") text-white">@item.Type</span></td>
+                                <td>
+                                    @if (!item.IsApproved)
+                                    {
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success">@item.Status</span>
+                                    }
+                                </td>
+                                <td class="small text-muted">@item.DatePosted.ToString("MMM dd")</td>
+                                <td>
+                                    <a asp-controller="Items" asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">View</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-header fw-semibold">Recent Users</div>
+            <ul class="list-group list-group-flush">
+                @foreach (var user in Model.RecentUsers)
+                {
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="fw-semibold">@user.FullName</div>
+                            <div class="small text-muted">@user.Email</div>
+                        </div>
+                        <small class="text-muted">@user.CreatedAt.ToString("MMM dd")</small>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>

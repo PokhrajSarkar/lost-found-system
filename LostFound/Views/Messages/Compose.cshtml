@@ -1,0 +1,40 @@
+@model LostFound.Models.ViewModels.SendMessageViewModel
+@{
+    ViewData["Title"] = "New Message";
+}
+
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0"><i class="bi bi-chat me-2"></i>Message @Model.ReceiverName</h4>
+      </div>
+      <div class="card-body">
+        @if (!string.IsNullOrEmpty(Model.ItemTitle))
+        {
+            <div class="alert alert-info small"><i class="bi bi-tag me-1"></i>Regarding: <strong>@Model.ItemTitle</strong></div>
+        }
+        <form asp-action="Send" method="post">
+          @Html.AntiForgeryToken()
+          <input type="hidden" asp-for="ReceiverId" />
+          <input type="hidden" asp-for="ReceiverName" />
+          <input type="hidden" asp-for="ItemId" />
+          <input type="hidden" asp-for="ItemTitle" />
+          <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+          <div class="mb-3">
+            <label asp-for="Body" class="form-label fw-semibold">Message</label>
+            <textarea asp-for="Body" class="form-control" rows="5" placeholder="Write your message..."></textarea>
+            <span asp-validation-for="Body" class="text-danger small"></span>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-send me-1"></i>Send</button>
+            <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+@section Scripts {
+  <partial name="_ValidationScriptsPartial" />
+}

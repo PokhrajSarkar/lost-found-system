@@ -1,0 +1,38 @@
+@using LostFound.Controllers
+@model List<ConversationSummary>
+@{
+    ViewData["Title"] = "Messages";
+}
+
+<h2 class="mb-4"><i class="bi bi-chat-dots me-2"></i>Messages</h2>
+
+@if (!Model.Any())
+{
+    <div class="text-center py-5 text-muted">
+        <i class="bi bi-chat-dots fs-1 d-block mb-3"></i>
+        <p>No conversations yet. Contact a poster from any item page.</p>
+    </div>
+}
+else
+{
+    <div class="list-group shadow-sm">
+        @foreach (var conv in Model)
+        {
+            <a asp-action="Thread" asp-route-id="@conv.OtherUserId"
+               class="list-group-item list-group-item-action d-flex gap-3 align-items-center py-3">
+                <i class="bi bi-person-circle fs-2 text-muted flex-shrink-0"></i>
+                <div class="flex-grow-1 overflow-hidden">
+                    <div class="d-flex justify-content-between">
+                        <strong>@conv.OtherUser.FullName</strong>
+                        <small class="text-muted">@conv.LastMessage.SentAt.ToString("MMM dd")</small>
+                    </div>
+                    <p class="mb-0 text-muted text-truncate small">@conv.LastMessage.Body</p>
+                </div>
+                @if (conv.UnreadCount > 0)
+                {
+                    <span class="badge bg-danger rounded-pill">@conv.UnreadCount</span>
+                }
+            </a>
+        }
+    </div>
+}

@@ -1,0 +1,55 @@
+@model IEnumerable<LostFound.Models.Message>
+@using LostFound.Models
+@{
+    ViewData["Title"] = $"Chat with {(ViewBag.OtherUser as User)?.FullName}";
+    var other = ViewBag.OtherUser as User;
+    var myId = ViewBag.MyId as string;
+}
+
+<div class="d-flex align-items-center gap-3 mb-4">
+    <a asp-action="Index" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+    <i class="bi bi-person-circle fs-2 text-muted"></i>
+    <h4 class="mb-0">@other?.FullName</h4>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body" style="max-height:500px;overflow-y:auto" id="chatBox">
+        @if (!Model.Any())
+        {
+            <p class="text-center text-muted py-4">No messages yet. Say hello!</p>
+        }
+        @foreach (var msg in Model)
+        {
+            bool mine = msg.SenderId == myId;
+            <div class="d-flex mb-3 @(mine ? "justify-content-end" : "justify-content-start")">
+                <div class="message-bubble @(mine ? "message-mine" : "message-theirs")">
+                    @if (msg.Item != null)
+                    {
+                        <div class="small mb-1 opacity-75">
+                            <i class="bi bi-tag me-1"></i>Re: <a asp-controller="Items" asp-action="Details" asp-route-id="@msg.Item.Id"
+                               class="@(mine ? "text-white" : "")">@msg.Item.Title</a>
+                        </div>
+                    }
+                    <div>@msg.Body</div>
+                    <div class="small mt-1 opacity-75">@msg.SentAt.ToString("HH:mm")</div>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="card-footer">
+        <form asp-action="Send" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="ReceiverId" value="@other?.Id" />
+            <div class="input-group">
+                <input type="text" name="Body" class="form-control" placeholder="Type a message..." required maxlength="2000" />
+                <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Scroll to bottom
+    var box = document.getElementById('chatBox');
+    box.scrollTop = box.scrollHeight;
+</script>
